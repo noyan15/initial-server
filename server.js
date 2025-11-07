@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const {sum} = require('./app')
+const Developer = require('./models/developerModel')
+const User = require('./models/userModel')
 
 const app = express(); 
 
@@ -30,7 +32,7 @@ var developers = [
 ]
 
 // Replace with your MongoDB connection string
-    const uri = "mongodb+srv://webeducators:webeducators12345@development.axnxetr.mongodb.net/"; 
+    const uri = "mongodb+srv://webeducators:webeducators12345@development.axnxetr.mongodb.net/initial-server"; 
 
     async function connectToMongoDBWithMongoose() {
       try {
@@ -51,9 +53,10 @@ var developers = [
 
 
 // health api
-app.get('/', (request, response)=>{
+app.get('/', async (request, response)=>{
     console.log('Hello World')
-    response.send(developers)
+    const developrss = await Developer.find()
+    response.send(developrss)
 })
 
 
@@ -84,35 +87,36 @@ app.post('/sum', sumMiddleware, (request, response)=>{
 })
 
 // add developer
-// api
+app.post('/add-developer', (request, response)=>{
+    const {name, age} = request.body;
+    Developer.create({name,age})
+    response.send(`new developer has been added`)
+})
 
 // get specific developer
-app.get('/get-developer/:id', (request, response)=> {
+app.get('/get-developer/:id', async (request, response)=> {
     const {id} = request.params;
-    const developer = developers.find(developer=> developer.id == id)
+    const developer = await Developer.findById(id);
     response.send(developer)
 })
 
 //  update  
-app.patch('/update-developer/:id', (request, response)=>{
+app.patch('/update-developer/:id', async (request, response)=>{
     console.log(request.params)
 
     const {id} = request.params
     const {name,age} = request.body;
     // const {id} = request.params
 
-    const index = developers.findIndex(develepor => develepor.id == id)
-    developers[index].name = name
-    developers[index].age = age
+    const developer = await Developer.findByIdAndUpdate(id, {name,age})
     
-    response.send(`updated developer is ${developers[index]}`)
+    response.send(`updated developer is ${developer}`)
 })
 
 // delete
-app.delete('/delete-developer/:id', (request,response) =>{
+app.delete('/delete-developer/:id', async (request,response) =>{
     const {id} = request.params;
-    const index = developers.findIndex(developer=> developer.id == id)
-    developers.splice(index, 1)
+    const developer = await Developer.deleteOne({_id: id})
     response.send('developer has been deleted successfully')
 })
 
@@ -143,3 +147,15 @@ app.listen(3000, () => {
 //        frontend   --->(request)              Backend
 //        Frontend   <---(response)             Backend
 //        Frontend     ---> (sends-request)    (recieve-request) Backend  --->  routes  -->  middleware  -->  function  
+
+
+
+
+
+
+
+
+
+
+//      C       R      U       D    
+//    Create    Read   Update  Delete
