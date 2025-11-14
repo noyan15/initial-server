@@ -4,10 +4,12 @@ const {sum} = require('./app')
 const Developer = require('./models/developerModel')
 const User = require('./models/userModel')
 const Blog = require('./models/blogModel')
+const userRoutes = require('./routes/userRoutes')
+const developerRoutes = require('./routes/developerRoutes')
 
 const app = express(); 
 
-app.use(express.json())
+app.use(express.json())  // middleware
 
 var developers = [
     {
@@ -61,69 +63,10 @@ var developers = [
 
 
 // auth module
+app.use('/auth', userRoutes);
 
-// registration api
-app.post('/register', async (request, response) => {
-    const {firstName, lastName, email, age, password, confirmPassword} = request.body;
-
-    if(password != confirmPassword){
-        return response.send('password and confirm password do not match')
-    }
-
-    const user = User.create({
-        firstName,
-        lastName,
-        email,
-        age,
-        password
-    })
-
-    response.send('user registered successfully')
-})
-
-app.post('/login', async (req, res)=>{
-    const {email, password} = req.body;
-
-    const user = await User.findOne({email: email});
-
-    if(user === null || user === undefined){
-        return res.send('Account does not exist or email is incorrect')
-    }
-
-    if(user.password !== password){
-        res.send('Password is incorrect')
-    }else {
-        res.send({
-            message: 'Login successful',
-            user: user
-        })
-    }
-})
-
-// change password api
-app.post('/change-password', async (req,res)=>{
-    const {email, oldPassword, newPassword, confirmNewPassword} = req.body;
-
-    const user = await User.findOne({email: email});
-
-    if(user === null || user === undefined){
-        return res.send('Account does not exist or email is incorrect')
-    }
-
-    if(user.password !== oldPassword){
-        return res.send('Old password is incorrect')
-    }
-
-    if(newPassword !== confirmNewPassword){
-        return res.send('New password and confirm new password do not match')
-    }
-
-    user.password = newPassword;
-    await user.save();
-
-    res.send('Password changed successfully')
-
-})
+// developer module
+app.use('/developer', developerRoutes);
 
 
 
@@ -174,39 +117,7 @@ app.post('/sum', sumMiddleware, (request, response)=>{
     response.send(`The sum is ${result}`)
 })
 
-// add developer
-app.post('/add-developer', (request, response)=>{
-    const {name, age} = request.body;
-    Developer.create({name,age})
-    response.send(`new developer has been added`)
-})
 
-// get specific developer
-app.get('/get-developer/:id', async (request, response)=> {
-    const {id} = request.params;
-    const developer = await Developer.findById(id);
-    response.send(developer)
-})
-
-//  update  
-app.patch('/update-developer/:id', async (request, response)=>{
-    console.log(request.params)
-
-    const {id} = request.params
-    const {name,age} = request.body;
-    // const {id} = request.params
-
-    const developer = await Developer.findByIdAndUpdate(id, {name,age})
-    
-    response.send(`updated developer is ${developer}`)
-})
-
-// delete
-app.delete('/delete-developer/:id', async (request,response) =>{
-    const {id} = request.params;
-    const developer = await Developer.deleteOne({_id: id})
-    response.send('developer has been deleted successfully')
-})
 
 
 app.listen(3000, () => {
